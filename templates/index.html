@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSLab Server Dashboard</title>
+    <script>
+        function fetchGPUData() {
+            fetch('/gpu_data')
+                .then(response => response.json())
+                .then(data => {
+                    gpuData = data;
+                    let gpuSelect = document.getElementById("gpuSelect");
+                    let selectedGpuType = gpuSelect.value;
+                    let tableBody = document.getElementById("gpuTableBody");
+                    let currentTime = Math.floor(Date.now() / 1000); // Get current UNIX timestamp
+    
+                    tableBody.innerHTML = "";
+    
+                    if (gpuSelect.options.length === 0) {
+                        Object.keys(data.gpu_types).forEach(gpuType => {
+                            let option = document.createElement("option");
+                            option.value = gpuType;
+                            option.textContent = gpuType;
+                            gpuSelect.appendChild(option);
+                        });
+                    }
+    
+                    if (selectedGpuType && selectedGpuType in data.gpu_types) {
+                        let lastServer = "";
+                        data.gpu_types[selectedGpuType].forEach((gpu, index) => {
+                            let row = tableBody.insertRow();
+                            let timeDifference = currentTime - gpu.unix_timestamp;
+                            let isRecent = timeDifference <= 10;
+    
+    
+                            if (gpu.server !== lastServer) {
+                                let serverCell = row.insertCell(-1);
+                                serverCell.textContent = gpu.server;
+                                serverCell.rowSpan = data.gpu_types[selectedGpuType].filter(item => item.server === gpu.server).length;
+                                serverCell.style.textAlign = "center";
+                            }
+    
+                            let gpuNameCell = row.insertCell(-1);
+                            gpuNameCell.textContent = gpu.name;
+    
+                            let memUsage = (gpu.memory_used / gpu.memory_total) * 100;
+                            let memCell = row.insertCell(-1);
+                            memCell.innerHTML = `<div class="progress-bar">
+                                <div class="progress" style="width: ${memUsage}%;"></div>
+                            </div>
+                            <span class="raw-values">${gpu.memory_used.toFixed(2)} / ${gpu.memory_total.toFixed(2)} MB</span>`;
+    
+                            let utilCell = row.insertCell(-1);
+                            utilCell.innerHTML = `<div class="progress-bar">
+                                <div class="progress" style="width: ${gpu.utilization}%;"></div>
+                            </div>
+                            <span class="raw-values">${gpu.utilization}%</span>`;
+    
+                            let utilPastThreeDaysCell = row.insertCell(-1);
+                            utilPastThreeDaysCell.innerHTML = `<span class="raw-values">${gpu.utilization}%</span>`;
+    
+                            let utilTempertureCell = row.insertCell(-1);
+                            utilTempertureCell.innerHTML = `<span class="raw-values">${gpu.temperature}°C</span>`;
+    
+                            if (gpu.server !== lastServer) {
+                                let diskCell = row.insertCell(-1);
+                                let diskSpace = gpu.free_disk_space_dict;
+                                let content = "";
+                                if (diskSpace && Object.keys(diskSpace).length > 0) {
+                                    for (let key in diskSpace) {
+                                        if (diskSpace.hasOwnProperty(key)) {
+                                            content += `<p><strong>${key}:</strong> ${parseInt(diskSpace[key])}G</p>`;
+                                        }
+                                    }
+                                } else {
+                                    content = `<span class="raw-values">N/A</span>`;
+                                }
+                                diskCell.innerHTML = content;
+                                diskCell.rowSpan = data.gpu_types[selectedGpuType].filter(item => item.server === gpu.server).length;
+                            }
+    
+
+                            if (!isRecent) {
+                                row.style.color = "#555"; // Darken row
+                                row.querySelectorAll(".raw-values").forEach(element => {
+                                    element.style.color = "#555";
+                                });
+                                row.querySelectorAll(".progress").forEach(element => {
+                                    element.style.backgroundColor = "#555";
+                                });
+                            }
+
+                            
+                            // Status
+                            let statusCell = row.insertCell(-1);let statusText;
+                            if (isRecent) {
+                                statusText = '<span class="raw-values" style="color: limegreen;">Up</span>';
+                            } else {
+                                let timeStr;
+                                if (timeDifference < 3600) {
+                                    timeStr = `${Math.floor(timeDifference / 60)} min ago`;
+                                } else if (timeDifference < 86400) {
+                                    timeStr = `${Math.floor(timeDifference / 3600)} hrs ago`;
+                                } else {
+                                    timeStr = `${Math.floor(timeDifference / 86400)} days ago`;
+                                }
+                                statusText = `<span class="raw-values" style="color: red;">Last online ${timeStr}</span>`;
+                            }
+                            statusCell.innerHTML = statusText;
+    
+
+                            if (gpu.server !== lastServer) {
+                                lastServer = gpu.server;
+                            }
+                        });
+                    }
+                });
+        }
+        setInterval(fetchGPUData, 1000);
+        window.onload = fetchGPUData;
+    </script>
+    
+    <style>
+        /* Dark Mode Styling */
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #f2f2f2;
+        }
+
+        select {
+            padding: 8px;
+            margin-bottom: 15px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 80%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #333;
+        }
+
+        /* Progress Bar Styling */
+        .progress-bar {
+            width: 100%;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .progress {
+            height: 20px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+
+        .progress-bar span {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+
+        /* Raw Values Styling */
+        .raw-values {
+            font-size: 14px;
+            color: #fff;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>VSLab Server Dashboard</h1>
+
+    <label for="gpuSelect">Select GPU Type:</label>
+    <select id="gpuSelect" onchange="fetchGPUData()"></select>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Server</th>
+                <th>Name</th>
+                <th>Memory Usage</th>
+                <th>Utilization</th>
+                <th>3-day Avg Util</th>
+                <th>Temperture</th>
+                <th>Free Disk Space</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="gpuTableBody"></tbody>
+    </table>
+</body>
+</html>

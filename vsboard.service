@@ -1,0 +1,12 @@
+[Unit]
+Description=Flask App
+After=network.target
+
+[Service]
+User=vsboard
+WorkingDirectory=/home/vsboard
+ExecStart=/path/to/your/flask/app/venv/bin/python /path/to/your/flask/app/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
