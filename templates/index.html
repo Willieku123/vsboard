@@ -49,7 +49,7 @@
                             memCell.innerHTML = `<div class="progress-bar">
                                 <div class="progress" style="width: ${memUsage}%;"></div>
                             </div>
-                            <span class="raw-values">${gpu.memory_used.toFixed(2)} / ${gpu.memory_total.toFixed(2)} MB</span>`;
+                            <span class="raw-values">${gpu.memory_used.toFixed(2)} / ${gpu.memory_total.toFixed(2)} GB</span>`;
     
                             let utilCell = row.insertCell(-1);
                             utilCell.innerHTML = `<div class="progress-bar">
@@ -58,7 +58,7 @@
                             <span class="raw-values">${gpu.utilization}%</span>`;
     
                             let utilPastThreeDaysCell = row.insertCell(-1);
-                            utilPastThreeDaysCell.innerHTML = `<span class="raw-values">${gpu.utilization}%</span>`;
+                            utilPastThreeDaysCell.innerHTML = `<span class="raw-values">${gpu.three_day_avg_util.toFixed(1)}%</span>`;
     
                             let utilTempertureCell = row.insertCell(-1);
                             utilTempertureCell.innerHTML = `<span class="raw-values">${gpu.temperature}°C</span>`;

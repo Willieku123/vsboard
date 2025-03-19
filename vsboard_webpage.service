@@ -1,0 +1,12 @@
+[Unit]
+Description=vsboard monitor
+After=network.target
+
+[Service]
+User=vsboard_user
+WorkingDirectory=/media/Pluto/willie/VSBoard
+ExecStart=/home/vsboard_user/vsboard_env/bin/python3 /media/Pluto/willie/VSBoard/monitor.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
