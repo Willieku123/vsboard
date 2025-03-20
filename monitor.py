@@ -13,10 +13,17 @@ def index():
 @app.route("/gpu_data")
 def gpu_data():
 
+    """
     categories = OrderedDict({"All": None,
-                  "1080, 2080 and Titan": ["NVIDIA GeForce RTX 1080", "NVIDIA GeForce RTX 2080", "NVIDIA GeForce RTX 2080 Ti"],
+                  "1080, 2080 and Titan": ["NVIDIA GeForce RTX 1080", "NVIDIA GeForce GTX 1080", "NVIDIA GeForce GTX 1080 Ti", "NVIDIA GeForce RTX 2080", "NVIDIA GeForce RTX 2080 Ti", "NVIDIA GeForce RTX TITAN X"],
                   "3090 and 4090": ["NVIDIA GeForce RTX 3090", "NVIDIA GeForce RTX 4090"],
                   "A6000": ["NVIDIA RTX A6000"]
+                 })
+    """
+    categories = OrderedDict({"All": None,
+                  "1080, 2080 and Titan": ["1080", "2080", "TITAN"],
+                  "3090 and 4090": ["3090", "4090"],
+                  "A6000": ["A6000"]
                  })
     categories["1080 and Above"] = categories["1080, 2080 and Titan"] + categories["3090 and 4090"] + categories["A6000"]
     categories["3090 and Above"] = categories["3090 and 4090"] + categories["A6000"]
@@ -34,8 +41,8 @@ def gpu_data():
 
                     # Categorize GPUs by type
                     for gpu in gpu_stats:
-                        for category_name, category_content in categories.items():
-                            if category_content is None or gpu['name'] in category_content:
+                        for category_name, category_keyword in categories.items():
+                            if category_keyword is None or any([keyword in gpu['name'] for keyword in category_keyword]):
                                 gpu_data = gpu
                                 gpu_data["server"] = server_name
 

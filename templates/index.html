@@ -103,8 +103,12 @@
                                         timeStr = `${Math.floor(timeDifference / 60)} min ago`;
                                     } else if (timeDifference < 86400) {
                                         timeStr = `${Math.floor(timeDifference / 3600)} hrs ago`;
-                                    } else {
+                                    } else if (timeDifference < 2592000) {
                                         timeStr = `${Math.floor(timeDifference / 86400)} days ago`;
+                                    } else if (timeDifference < 31536000) {
+                                        timeStr = `${Math.floor(timeDifference / 2592000)} months ago`;
+                                    } else {
+                                        timeStr = `${Math.floor(timeDifference / 31536000)} yrs ago`;
                                     }
                                     statusText = `<span class="raw-values" style="color: red;">Last updated ${timeStr}</span>`;
                                 }
@@ -128,7 +132,7 @@
                     }
                 });
         }
-        setInterval(fetchGPUData, 1000);
+        setInterval(fetchGPUData, 2000);
         window.onload = fetchGPUData;
     </script>
     
