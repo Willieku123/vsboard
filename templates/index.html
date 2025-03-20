@@ -18,10 +18,10 @@
                     tableBody.innerHTML = "";
     
                     if (gpuSelect.options.length === 0) {
-                        Object.keys(data.gpu_types).forEach(gpuType => {
+                        data.categories.forEach(category => {
                             let option = document.createElement("option");
-                            option.value = gpuType;
-                            option.textContent = gpuType;
+                            option.value = category;
+                            option.textContent = category;
                             gpuSelect.appendChild(option);
                         });
                     }
@@ -93,21 +93,32 @@
 
                             
                             // Status
-                            let statusCell = row.insertCell(-1);let statusText;
-                            if (isRecent) {
-                                statusText = '<span class="raw-values" style="color: limegreen;">Up</span>';
-                            } else {
-                                let timeStr;
-                                if (timeDifference < 3600) {
-                                    timeStr = `${Math.floor(timeDifference / 60)} min ago`;
-                                } else if (timeDifference < 86400) {
-                                    timeStr = `${Math.floor(timeDifference / 3600)} hrs ago`;
+                            if (gpu.server !== lastServer) {
+                                let statusCell = row.insertCell(-1);let statusText;
+                                if (isRecent) {
+                                    statusText = '<span class="raw-values" style="color: limegreen;">Up</span>';
                                 } else {
-                                    timeStr = `${Math.floor(timeDifference / 86400)} days ago`;
+                                    let timeStr;
+                                    if (timeDifference < 3600) {
+                                        timeStr = `${Math.floor(timeDifference / 60)} min ago`;
+                                    } else if (timeDifference < 86400) {
+                                        timeStr = `${Math.floor(timeDifference / 3600)} hrs ago`;
+                                    } else {
+                                        timeStr = `${Math.floor(timeDifference / 86400)} days ago`;
+                                    }
+                                    statusText = `<span class="raw-values" style="color: red;">Last updated ${timeStr}</span>`;
                                 }
-                                statusText = `<span class="raw-values" style="color: red;">Last online ${timeStr}</span>`;
+                                statusCell.innerHTML = statusText;
+                                statusCell.rowSpan = data.gpu_types[selectedGpuType].filter(item => item.server === gpu.server).length;
+                                statusCell.style.textAlign = "center";
                             }
-                            statusCell.innerHTML = statusText;
+
+
+                            if (gpu.server == lastServer) {
+                                Array.from(row.cells).forEach(cell => {
+                                    cell.style.borderTop = "none";
+                                });
+                            }
     
 
                             if (gpu.server !== lastServer) {
@@ -156,8 +167,9 @@
 
         th, td {
             border: 1px solid #444;
-            padding: 10px;
+            padding: 4px;
             text-align: left;
+            border-bottom: none;
         }
 
         th {
@@ -214,7 +226,7 @@
                 <th>Memory Usage</th>
                 <th>Utilization</th>
                 <th>3-day Avg Util</th>
-                <th>Temperture</th>
+                <th>Temperature</th>
                 <th>Free Disk Space</th>
                 <th>Status</th>
             </tr>

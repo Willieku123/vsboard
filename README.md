@@ -43,7 +43,7 @@ journalctl -u vsboard_logger -f --no-pager
 ## vsboard_webpage
 
 Only setup this on one server (QAQ for now)
-You may want to adjust ports in `monitor.py` if the port has been occupied.
+You may want to change the port in `monitor.py` if the port has been occupied.
 
 copy "vsboard_webpage.service to the file below: 
 ```
