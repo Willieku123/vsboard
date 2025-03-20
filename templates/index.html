@@ -130,6 +130,10 @@
                             }
                         });
                     }
+
+                    document.getElementById("lastFetchTime").textContent = 
+                        "Last Fetch Time: " + new Date().toLocaleTimeString("en-US");
+
                 });
         }
         setInterval(fetchGPUData, 2000);
@@ -219,8 +223,14 @@
 <body>
     <h1>VSLab Server Dashboard</h1>
 
+
     <label for="gpuSelect">Select GPU Type:</label>
     <select id="gpuSelect" onchange="fetchGPUData()"></select>
+
+    
+    <p id="lastFetchTime" style="text-align: left; margin-left: 10%; font-size: 14px; color: #bbb;">
+        Last Fetch Time: --
+    </p>
 
     <table>
         <thead>

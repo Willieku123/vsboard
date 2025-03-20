@@ -12,14 +12,6 @@ def index():
 
 @app.route("/gpu_data")
 def gpu_data():
-
-    """
-    categories = OrderedDict({"All": None,
-                  "1080, 2080 and Titan": ["NVIDIA GeForce RTX 1080", "NVIDIA GeForce GTX 1080", "NVIDIA GeForce GTX 1080 Ti", "NVIDIA GeForce RTX 2080", "NVIDIA GeForce RTX 2080 Ti", "NVIDIA GeForce RTX TITAN X"],
-                  "3090 and 4090": ["NVIDIA GeForce RTX 3090", "NVIDIA GeForce RTX 4090"],
-                  "A6000": ["NVIDIA RTX A6000"]
-                 })
-    """
     categories = OrderedDict({"All": None,
                   "1080, 2080 and Titan": ["1080", "2080", "TITAN"],
                   "3090 and 4090": ["3090", "4090"],
@@ -29,11 +21,17 @@ def gpu_data():
     categories["3090 and Above"] = categories["3090 and 4090"] + categories["A6000"]
     categories["A6000 and Above"] = categories["A6000"]
 
+    priority_list = ["woof", "QAQ", "mercury", "Neptune", "aniki", "Brandy", "sctech", "Rum", "nthuee1", "nthuee2", "Nemo", "Tequila", "Gin"]
+
     
     gpu_info_by_category = {k: [] for k, v in categories.items()}
 
     if os.path.exists(DATA_DIR):
-        for server_name in os.listdir(DATA_DIR):
+        all_servers = os.listdir(DATA_DIR)
+        # Sort servers based on whether they are in the priority list
+        sorted_servers = sorted(all_servers, key=lambda x: (x not in priority_list, priority_list.index(x) if x in priority_list else len(priority_list)))
+
+        for server_name in sorted_servers:
             server_path = os.path.join(DATA_DIR, server_name, "gpu_stats.json")
             if os.path.exists(server_path):
                 with open(server_path, "r") as f:
