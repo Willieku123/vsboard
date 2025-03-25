@@ -1,3 +1,4 @@
 pynvml
 waitress
 flask
+psutil

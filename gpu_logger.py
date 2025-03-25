@@ -5,6 +5,7 @@ import time
 import socket
 import datetime
 import shutil
+import psutil
 
 DATA_DIR = "data"
 SERVER_NAME = socket.gethostname()  # Get the server's hostname
@@ -12,7 +13,7 @@ SAVE_PATH = os.path.join(DATA_DIR, SERVER_NAME)
 os.makedirs(SAVE_PATH, exist_ok=True)  # Ensure directory exists
 
 def get_free_disk_space_dict():
-    possible_disk_paths = ["/home", "/extra_home", "/extra_home2", "/extra_home3"]
+    possible_disk_paths = ["/home", "/extra_home", "/extra_home2", "/extra_home3", "/media/external"]
     free_disk_space_dict = {}
 
     for disk_path in possible_disk_paths:
@@ -39,25 +40,56 @@ def save_gpu_stats(log_utils=False, log_days=3):
     gpu_data = []
 
     for i in range(gpu_count):
-        handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-        name = pynvml.nvmlDeviceGetName(handle)
-        mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-        util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-        temperature = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
-        free_disk_space_dict = get_free_disk_space_dict()
         unix_timestamp = datetime.datetime.now().timestamp()
+        free_disk_space_dict = get_free_disk_space_dict()
+        try:
+            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            name = pynvml.nvmlDeviceGetName(handle)
+            mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            util = pynvml.nvmlDeviceGetUtilizationRates(handle)
+            temperature = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
 
-        gpu_data.append({
-            "id": i,
-            "name": name,
-            "memory_used": mem_info.used / 1024**3,  # GB
-            "memory_total": mem_info.total / 1024**3,
-            "utilization": util.gpu,
-            "three_day_avg_util": util_avg_list[i] if util_avg_list is not None else -1,
-            "temperature": temperature,
-            "free_disk_space_dict": free_disk_space_dict,
-            "unix_timestamp": unix_timestamp
-        })
+            users = set()
+            processes = pynvml.nvmlDeviceGetComputeRunningProcesses(handle)
+            for process in processes:
+                try:
+                    user = psutil.Process(process.pid).username()
+                    users.add(user)
+                except psutil.NoSuchProcess:
+                    pass  # Process may have terminated
+
+
+            gpu_data.append({
+                "id": i,
+                "name": name,
+                "memory_used": mem_info.used / 1024**3,  # GB
+                "memory_total": mem_info.total / 1024**3,
+                "utilization": util.gpu,
+                "three_day_avg_util": util_avg_list[i] if util_avg_list is not None else -1,
+                "temperature": temperature,
+                "free_disk_space_dict": free_disk_space_dict,
+                "unix_timestamp": unix_timestamp,
+                "error": False,
+                "error_message": "",
+                "users": list(users)
+            })
+
+        
+        except Exception as e:
+            gpu_data.append({
+                "id": i,
+                "name": str(e),
+                "memory_used": 0,  # GB
+                "memory_total": 0.1,
+                "utilization": 0,
+                "three_day_avg_util": util_avg_list[i] if util_avg_list is not None else -1,
+                "temperature": -1,
+                "free_disk_space_dict": free_disk_space_dict,
+                "unix_timestamp": unix_timestamp,
+                "error": True,
+                "error_message": str(e),
+                "users": []
+            })
     
     #print(gpu_data)
 
@@ -110,6 +142,9 @@ if __name__ == "__main__":
 
     assert (log_utils_every_n_second // save_gpu_stats_every_n_second) > 1
     counter = 0
+
+    time.sleep(120) # delay until system is fully rebooted
+
     while True:
         if counter != log_utils_every_n_second // save_gpu_stats_every_n_second:
             save_gpu_stats(log_utils=False)

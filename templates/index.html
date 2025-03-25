@@ -28,10 +28,12 @@
     
                     if (selectedGpuType && selectedGpuType in data.gpu_types) {
                         let lastServer = "";
+                        let statusCell;
+                        let statusText;
                         data.gpu_types[selectedGpuType].forEach((gpu, index) => {
                             let row = tableBody.insertRow();
                             let timeDifference = currentTime - gpu.unix_timestamp;
-                            let isRecent = timeDifference <= 10;
+                            let isRecent = timeDifference <= 60;
     
     
                             if (gpu.server !== lastServer) {
@@ -79,8 +81,21 @@
                                 diskCell.innerHTML = content;
                                 diskCell.rowSpan = data.gpu_types[selectedGpuType].filter(item => item.server === gpu.server).length;
                             }
+
+                            let userCell = row.insertCell(-1);
+                            let userList = gpu.users;
+                            let content = "";
+                            if (userList && userList.length > 0) {
+                                userList.forEach(user => {
+                                    content += `${user} `;
+                                });
+                            } else {
+                                content = `<span class="raw-values"></span>`;
+                            }
+                            userCell.innerHTML = content;
     
 
+                            
                             if (!isRecent) {
                                 row.style.color = "#555"; // Darken row
                                 row.querySelectorAll(".raw-values").forEach(element => {
@@ -91,10 +106,11 @@
                                 });
                             }
 
-                            
+
+                                                        
                             // Status
                             if (gpu.server !== lastServer) {
-                                let statusCell = row.insertCell(-1);let statusText;
+                                statusCell = row.insertCell(-1);
                                 if (isRecent) {
                                     statusText = '<span class="raw-values" style="color: limegreen;">Up</span>';
                                 } else {
@@ -102,19 +118,38 @@
                                     if (timeDifference < 3600) {
                                         timeStr = `${Math.floor(timeDifference / 60)} min ago`;
                                     } else if (timeDifference < 86400) {
-                                        timeStr = `${Math.floor(timeDifference / 3600)} hrs ago`;
+                                        timeStr = `${Math.floor(timeDifference / 3600)} hr ago`;
                                     } else if (timeDifference < 2592000) {
                                         timeStr = `${Math.floor(timeDifference / 86400)} days ago`;
                                     } else if (timeDifference < 31536000) {
                                         timeStr = `${Math.floor(timeDifference / 2592000)} months ago`;
-                                    } else {
+                                    } else if (timeDifference < 315360000) {
                                         timeStr = `${Math.floor(timeDifference / 31536000)} yrs ago`;
+                                    } else {
+                                        timeStr = `long time ago`;
                                     }
                                     statusText = `<span class="raw-values" style="color: red;">Last updated ${timeStr}</span>`;
                                 }
                                 statusCell.innerHTML = statusText;
                                 statusCell.rowSpan = data.gpu_types[selectedGpuType].filter(item => item.server === gpu.server).length;
                                 statusCell.style.textAlign = "center";
+                            }
+
+
+                            // Error
+                            
+                            if (isRecent && gpu.error) {
+                                row.style.color = "#555"; // Darken row
+                                row.querySelectorAll(".raw-values").forEach(element => {
+                                    element.style.color = "#555";
+                                });
+                                row.querySelectorAll(".progress").forEach(element => {
+                                    element.style.backgroundColor = "#555";
+                                });
+                                
+                                statusText = `<span class="raw-values" style="color: #FFFF33;"> ${gpu.error_message}</span>`;
+                                //statusText = '<span class="raw-values" style="color: #FFFF33;"> ${gpu.error_message}</span>';
+                                statusCell.innerHTML = statusText;
                             }
 
 
@@ -242,6 +277,7 @@
                 <th>3-day Avg Util</th>
                 <th>Temperature</th>
                 <th>Free Disk Space</th>
+                <th>Active Users</th>
                 <th>Status</th>
             </tr>
         </thead>
